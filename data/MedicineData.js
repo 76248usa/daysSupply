@@ -1015,6 +1015,7 @@ export const medicineData = [
     unitsInPen: 300,
     expire: 28,
     prime: 2,
+    pensAmount: 5,
   },
   {
     id: 44,
@@ -1215,5 +1216,14 @@ export const medicineData = [
     unitsInPen: 600,
     expire: 56,
     pensAmount: 3,
+  },
+  {
+    id: 65,
+    name: "Novolin R FlexPen 5 Pens U-100 ",
+    addToName: "3ml per Pen, 15ml per Box",
+    ndc: "NDC: 0169-3003-15",
+    unitsInPen: 300,
+    prime: 2,
+    expire: 28,
   },
 ];

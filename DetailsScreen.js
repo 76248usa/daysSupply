@@ -14,28 +14,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePro } from "./context/ProContext";
 
-function AdBannerPlaceholder() {
-  return (
-    <View
-      style={{
-        height: 50,
-        borderRadius: 8,
-        marginTop: 20,
-        alignItems: "center",
-        justifyContent: "center",
-        borderWidth: 1,
-        borderColor: "#444",
-      }}
-    >
-      <Text style={{ color: "#aaa", fontSize: 12 }}>Ad banner here</Text>
-    </View>
-  );
-}
-
 // ⬇️ add `navigation` here
 const DetailsScreen = ({ route, navigation }) => {
   const { medicine } = route?.params ?? {};
-  const { isPro, trialExpired } = usePro();
+  const { isPro } = usePro();
 
   const [units, setUnit] = useState("");
   const [times, setTimes] = useState("");
@@ -52,11 +34,13 @@ const DetailsScreen = ({ route, navigation }) => {
   function pressHandler() {
     Keyboard.dismiss();
 
-    if (trialExpired && !isPro) {
+    // ✅ Gate calculations behind trial/subscription
+    if (!isPro) {
       Alert.alert(
-        "Trial ended",
-        "Your one-month free trial has ended. Please subscribe to continue using the Days' Supply calculator."
+        "Subscription required",
+        "Start your 1-month free trial to unlock the Days’ Supply calculator."
       );
+      navigation.navigate("Upgrade");
       return;
     }
 
@@ -104,11 +88,10 @@ const DetailsScreen = ({ route, navigation }) => {
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView keyboardShouldPersistTaps="handled">
           <View style={styles.container}>
-            {/* ⬇️ Home button row */}
             <View style={styles.headerRow}>
               <TouchableOpacity
                 style={styles.homeButton}
-                onPress={() => navigation.navigate("Home")} // make sure "Home" matches your route name
+                onPress={() => navigation.navigate("Home")}
                 activeOpacity={0.75}
               >
                 <Text style={styles.homeButtonText}>Home</Text>
@@ -118,6 +101,7 @@ const DetailsScreen = ({ route, navigation }) => {
             <Text style={styles.heading}>{medicine?.name}</Text>
             <Text style={styles.subHeading}>{medicine?.addToName}</Text>
             <Text style={styles.ndc}>{medicine?.ndc}</Text>
+
             {directions ? (
               <Text style={styles.directions}>{directions}</Text>
             ) : null}
@@ -183,8 +167,6 @@ const DetailsScreen = ({ route, navigation }) => {
                 <Text style={styles.buttonSecondaryText}>Reset</Text>
               </TouchableOpacity>
             </View>
-
-            {!isPro && <AdBannerPlaceholder />}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -194,13 +176,9 @@ const DetailsScreen = ({ route, navigation }) => {
 
 const createResponsiveStyles = (width, height) =>
   StyleSheet.create({
-    screen: {
-      flex: 1,
-    },
-    container: {
-      padding: width * 0.06,
-    },
-    // ⬇️ new styles for header + home button
+    screen: { flex: 1 },
+    container: { padding: width * 0.06 },
+
     headerRow: {
       flexDirection: "row",
       justifyContent: "flex-start",
@@ -219,6 +197,7 @@ const createResponsiveStyles = (width, height) =>
       fontSize: width * 0.04,
       fontWeight: "500",
     },
+
     heading: {
       fontSize: width * 0.06,
       fontWeight: "700",
@@ -245,6 +224,7 @@ const createResponsiveStyles = (width, height) =>
       marginBottom: height * 0.02,
       fontStyle: "italic",
     },
+
     resultContainer: {
       flexDirection: "row",
       justifyContent: "space-around",
@@ -255,19 +235,14 @@ const createResponsiveStyles = (width, height) =>
       borderWidth: 1,
       borderColor: "#1f2937",
     },
-    resultBox: {
-      alignItems: "center",
-    },
-    resultLabel: {
-      fontSize: width * 0.035,
-      color: "#9ca3af",
-      marginBottom: 4,
-    },
+    resultBox: { alignItems: "center" },
+    resultLabel: { fontSize: width * 0.035, color: "#9ca3af", marginBottom: 4 },
     resultValue: {
       fontSize: width * 0.08,
       fontWeight: "bold",
       color: "#facc15",
     },
+
     label: {
       fontSize: width * 0.038,
       color: "#e5e7eb",
@@ -284,10 +259,8 @@ const createResponsiveStyles = (width, height) =>
       borderWidth: 1,
       borderColor: "#1f2937",
     },
-    input: {
-      fontSize: width * 0.045,
-      color: "#e5e7eb",
-    },
+    input: { fontSize: width * 0.045, color: "#e5e7eb" },
+
     buttonRow: {
       flexDirection: "row",
       justifyContent: "space-evenly",
