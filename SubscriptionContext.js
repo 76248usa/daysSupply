@@ -2,6 +2,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import Purchases from "react-native-purchases";
 
+const SCREENSHOT_MODE = process.env.EXPO_PUBLIC_SCREENSHOT_MODE === "1";
+
+// wherever you compute isPro (from RevenueCat, storage, etc)
+const effectiveIsPro = SCREENSHOT_MODE ? true : isPro;
+
 const SubscriptionContext = createContext(null);
 
 // 👇 Use this in screens to read isPro:

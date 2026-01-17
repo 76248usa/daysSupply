@@ -18,6 +18,9 @@ import { usePro } from "./context/ProContext";
 const DetailsScreen = ({ route, navigation }) => {
   const { medicine } = route?.params ?? {};
   const { isPro } = usePro();
+  const SCREENSHOT_MODE = process.env.EXPO_PUBLIC_SCREENSHOT_MODE === "1";
+
+  const effectiveIsPro = SCREENSHOT_MODE ? true : isPro;
 
   const [units, setUnit] = useState("");
   const [times, setTimes] = useState("");
@@ -34,8 +37,22 @@ const DetailsScreen = ({ route, navigation }) => {
   function pressHandler() {
     Keyboard.dismiss();
 
+    // // ✅ Gate calculations behind trial/subscription
+    // if (!isPro) {
+    //   Alert.alert(
+    //     "Subscription required",
+    //     "Start your 1-month free trial to unlock the Days’ Supply calculator."
+    //   );
+    //   navigation.navigate("Upgrade");
+    //   return;
+    // }
+
+    const SCREENSHOT_MODE = process.env.EXPO_PUBLIC_SCREENSHOT_MODE === "1";
+
+    const effectiveIsPro = SCREENSHOT_MODE ? true : isPro;
+
     // ✅ Gate calculations behind trial/subscription
-    if (!isPro) {
+    if (!effectiveIsPro) {
       Alert.alert(
         "Subscription required",
         "Start your 1-month free trial to unlock the Days’ Supply calculator."

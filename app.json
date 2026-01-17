@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "rx-days-supply",
+    "name": "Insulin Days’ Supply",
     "slug": "rx-days-supply",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.elsabe.rxdayssupply",
-      "buildNumber": "4",
+      "buildNumber": "19",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -27,7 +27,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.elsabe.rxdayssupply",
-      "versionCode": 4
+      "versionCode": 19
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -36,6 +36,7 @@
       "eas": {
         "projectId": "d2c2dafc-70a0-4883-95da-1f05eb8309e5"
       }
-    }
+    },
+    "plugins": ["expo-web-browser"]
   }
 }

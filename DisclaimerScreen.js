@@ -18,21 +18,22 @@ export default function DisclaimerScreen({ navigation }) {
 
           <Text style={styles.body}>
             This app is provided for informational and convenience purposes only
-            and is not medical advice.
+            and does not constitute medical advice.
             {"\n\n"}
-            Days’ supply calculations can vary by product, device, priming,
-            discard dates, patient-specific directions, and payer/audit
-            requirements.
+            Days’ supply calculations may vary based on product design, priming
+            requirements, discard dates, patient-specific directions, and payer
+            or audit requirements.
             {"\n\n"}
             <Text style={styles.bold}>
               You must independently verify all inputs and results
             </Text>{" "}
-            before dispensing or documenting days’ supply. The user assumes all
-            responsibility for use of the app and any decisions made based on
-            its output.
+            prior to dispensing, billing, or documentation. The user assumes
+            full responsibility for use of this app and for any decisions made
+            based on its output.
             {"\n\n"}
-            If there is any discrepancy, follow the prescription directions,
-            product labeling, and your organization’s policies/procedures.
+            In the event of any discrepancy, always follow the prescription
+            directions, product labeling, and your organization’s policies and
+            procedures.
           </Text>
 
           <TouchableOpacity

@@ -1,4 +1,5 @@
-import React from "react";
+// UpgradeScreen.js
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -6,125 +7,222 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from "react-native";
-import Purchases, { PurchasesErrorCode } from "react-native-purchases";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import { usePro } from "./context/ProContext";
 
+const TERMS_URL =
+  "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+const PRIVACY_URL =
+  "https://www.privacypolicies.com/live/11a1f1a8-c935-4857-91f0-cf9428648cdf";
+
 export default function UpgradeScreen({ navigation }) {
-  const { purchaseAnnual, restore, isPurchasing } = usePro();
+  const { purchaseAnnual, isPurchasing } = usePro();
+  const [busy, setBusy] = useState(false);
 
-  const onSubscribe = async () => {
+  // Keep these in one place so you don’t miss them in UI + reviewer tests
+  const TRIAL_TEXT = useMemo(
+    () => ({
+      headline: "Unlock Unlimited Use",
+      sub1: "Start your free trial to unlock the Days’ Supply calculator.",
+      sub2: "Free trial available. Subscription required for full access.",
+      sub3: "After the free trial ends, a yearly subscription of $2.99 will automatically renew unless canceled at least 24 hours before the end of the trial.",
+      sub4: "You can manage or cancel your subscription anytime in your App Store account settings.",
+    }),
+    []
+  );
+
+  const openLink = async (url) => {
     try {
-      await purchaseAnnual();
-
-      // After success, go back to Home automatically
-      navigation?.goBack?.();
+      // Opens an in-app Safari view with a “Done” button (back/close)
+      await WebBrowser.openBrowserAsync(url, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        controlsColor: "#111827",
+      });
     } catch (e) {
-      // ✅ Proper cancel handling
-      if (e?.code === PurchasesErrorCode.PurchaseCancelledError) return;
-
-      Alert.alert("Subscription", e?.message || "Purchase failed.");
+      Alert.alert("Unable to open link", "Please try again.");
     }
   };
 
-  const onRestore = async () => {
+  const handleStartTrial = async () => {
+    if (busy || isPurchasing) return;
+
+    setBusy(true);
     try {
-      await restore();
-      navigation?.goBack?.();
+      await purchaseAnnual();
+      Alert.alert("Success", "You're upgraded! 🎉");
+      navigation.goBack();
     } catch (e) {
-      Alert.alert("Restore Purchases", e?.message || "Restore failed.");
+      Alert.alert(
+        "Subscription failed",
+        e?.message ?? "Please try again in a moment."
+      );
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <View style={styles.wrap}>
-      <Text style={styles.title}>Unlock Unlimited Use</Text>
-      <Text style={styles.subtitle}>
-        Start your free trial to unlock audit-safe days’ supply calculations.
-      </Text>
+    <LinearGradient colors={["#0f172a", "#111827"]} style={styles.container}>
+      <SafeAreaView style={styles.safe}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" // ✅ Fix #2
+          contentContainerStyle={styles.scrollContent}
+        >
+          <Text style={styles.title}>{TRIAL_TEXT.headline}</Text>
+          <Text style={styles.subtitle}>{TRIAL_TEXT.sub1}</Text>
 
-      <View style={styles.bullets}>
-        <Text style={styles.bullet}>• 1-month free trial</Text>
-        <Text style={styles.bullet}>• $1.99 per year</Text>
-        <Text style={styles.bullet}>
-          • Cancel anytime in Apple ID subscriptions
-        </Text>
-      </View>
+          {/* ✅ Apple clarity: trial + paid + auto-renew + price */}
+          <Text style={styles.subtitlesmall}>{TRIAL_TEXT.sub2}</Text>
+          <Text style={styles.subtitlesmall}>{TRIAL_TEXT.sub3}</Text>
+          <Text style={styles.subtitlesmall}>{TRIAL_TEXT.sub4}</Text>
 
-      <TouchableOpacity
-        style={styles.primary}
-        onPress={onSubscribe}
-        disabled={isPurchasing}
-        activeOpacity={0.85}
-      >
-        {isPurchasing ? (
-          <ActivityIndicator />
-        ) : (
-          <Text style={styles.primaryText}>Start Free Trial</Text>
-        )}
-      </TouchableOpacity>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Yearly Pro</Text>
+            <Text style={styles.cardText}>
+              Unlimited calculations, priming included.
+            </Text>
+            <Text style={styles.price}>$2.99 / year</Text>
+          </View>
 
-      <TouchableOpacity
-        style={styles.secondary}
-        onPress={onRestore}
-        disabled={isPurchasing}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.secondaryText}>Restore Purchases</Text>
-      </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={handleStartTrial}
+            style={[
+              styles.primaryButton, // ✅ Fix #4
+              (busy || isPurchasing) && styles.primaryButtonDisabled,
+            ]}
+          >
+            {busy || isPurchasing ? (
+              <View style={styles.row}>
+                <ActivityIndicator />
+                <Text style={styles.primaryButtonText}> Starting…</Text>
+              </View>
+            ) : (
+              <Text style={styles.primaryButtonText}>Start Free Trial</Text>
+            )}
+          </TouchableOpacity>
 
-      <Text style={styles.terms}>
-        Payment will be charged to your Apple ID at confirmation of purchase.
-        Subscription renews automatically unless canceled at least 24 hours
-        before the end of the period.
-      </Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.secondaryButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.secondaryButtonText}>Not Now</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.link}
-        onPress={() => navigation?.goBack?.()}
-      >
-        <Text style={styles.linkText}>Not now</Text>
-      </TouchableOpacity>
-    </View>
+          {/* ✅ Legal links inside purchase flow (tap opens in-app browser with Done button) */}
+          <View style={styles.links}>
+            <Text style={styles.linksHeader}>Links</Text>
+
+            <Text style={styles.link} onPress={() => openLink(TERMS_URL)}>
+              Terms of Use (EULA)
+            </Text>
+
+            <Text style={styles.link} onPress={() => openLink(PRIVACY_URL)}>
+              Privacy Policy
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    flex: 1,
-    padding: 22,
-    justifyContent: "center",
-    backgroundColor: "#0b1220",
+  container: { flex: 1 },
+  safe: { flex: 1 },
+
+  // ✅ Fix #2: padding so taps aren’t near the edge
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 60,
   },
-  title: { fontSize: 28, fontWeight: "800", color: "white", marginBottom: 10 },
-  subtitle: { fontSize: 15, color: "#cbd5e1", lineHeight: 21 },
-  bullets: { marginTop: 16, marginBottom: 20 },
-  bullet: { color: "#e2e8f0", marginBottom: 6, fontSize: 15 },
-  primary: {
-    height: 54,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#0ABDE3",
+
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#fff",
+    marginTop: 8,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.88)",
+    marginTop: 10,
+    marginBottom: 10,
+    lineHeight: 20,
+  },
+  subtitlesmall: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.78)",
+    lineHeight: 18,
     marginTop: 6,
   },
-  primaryText: { color: "#06202a", fontWeight: "800", fontSize: 16 },
-  secondary: {
-    height: 50,
-    borderRadius: 14,
+
+  card: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    marginTop: 18,
+    marginBottom: 18,
+  },
+  cardTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  cardText: {
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  price: {
+    color: "#fff",
+    marginTop: 12,
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  // ✅ Fix #4: large tap target
+  primaryButton: {
+    minHeight: 56,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#22c55e",
+  },
+  primaryButtonDisabled: { opacity: 0.75 },
+  primaryButtonText: { color: "#0b1220", fontWeight: "800", fontSize: 16 },
+
+  secondaryButton: {
     marginTop: 12,
+    minHeight: 52,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.10)",
     borderWidth: 1,
-    borderColor: "#3C6382",
+    borderColor: "rgba(255,255,255,0.15)",
   },
-  secondaryText: { color: "#e2e8f0", fontWeight: "700" },
-  terms: {
-    marginTop: 16,
-    color: "#94a3b8",
+  secondaryButtonText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+
+  links: { marginTop: 20, gap: 10 },
+  linksHeader: {
+    color: "rgba(255,255,255,0.75)",
     fontSize: 12,
-    lineHeight: 16,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
-  link: { alignItems: "center", marginTop: 16 },
-  linkText: { color: "#94a3b8" },
+  link: {
+    color: "rgba(255,255,255,0.92)",
+    textDecorationLine: "underline",
+    fontSize: 13,
+  },
+
+  row: { flexDirection: "row", alignItems: "center" },
 });
